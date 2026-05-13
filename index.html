@@ -578,6 +578,7 @@
     border-radius: 10px;
     overflow: hidden;
     transition: border-color 0.2s;
+    flex-shrink: 0;
   }
   .ch-item.ch-expanded { border-color: #4db8f0; }
   .ch-header {
@@ -588,6 +589,7 @@
     cursor: pointer;
     background: white;
     transition: background 0.15s;
+    min-height: 48px;
   }
   .ch-header:hover { background: var(--gray-100); }
   .ch-expanded .ch-header { background: #f0faff; }
@@ -1034,26 +1036,30 @@
 
   /* ════ DUAL COLUMN PAGES (chapter + ICR edit) ════ */
   #page-chapter.active,
-  #page-icr-edit.active {
+  #page-icr-edit.active,
+  #page-parse.active {
     height: 100vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
   #page-chapter .header,
-  #page-icr-edit .header {
+  #page-icr-edit .header,
+  #page-parse .header {
     flex-shrink: 0;
     position: relative;
     top: auto;
   }
   #page-chapter .step-bar-wrap,
-  #page-icr-edit .step-bar-wrap {
+  #page-icr-edit .step-bar-wrap,
+  #page-parse .step-bar-wrap {
     flex-shrink: 0;
     position: relative;
     top: auto;
   }
   #page-chapter .main,
-  #page-icr-edit .main {
+  #page-icr-edit .main,
+  #page-parse .main {
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -1062,7 +1068,8 @@
     align-items: stretch;
   }
   #page-chapter .content-wrap,
-  #page-icr-edit .content-wrap {
+  #page-icr-edit .content-wrap,
+  #page-parse .content-wrap {
     width: 100%;
     max-width: 100%;
     display: flex;
@@ -1071,7 +1078,8 @@
     flex: 1;
   }
   #page-chapter .chapter-body,
-  #page-icr-edit .chapter-body {
+  #page-icr-edit .chapter-body,
+  #page-parse .chapter-body {
     flex: 1;
     min-height: 0;
     display: grid;
@@ -1080,7 +1088,8 @@
     overflow: hidden;
   }
   #page-chapter .ch-panel,
-  #page-icr-edit .ch-panel {
+  #page-icr-edit .ch-panel,
+  #page-parse .ch-panel {
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1091,7 +1100,8 @@
     box-shadow: var(--shadow);
   }
   #page-chapter .ch-list,
-  #page-icr-edit .ch-list {
+  #page-icr-edit .ch-list,
+  #page-parse .ch-list {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
@@ -1101,7 +1111,8 @@
     gap: 8px;
   }
   #page-chapter .pdf-panel,
-  #page-icr-edit .pdf-panel {
+  #page-icr-edit .pdf-panel,
+  #page-parse .pdf-panel {
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1112,7 +1123,8 @@
     box-shadow: var(--shadow);
   }
   #page-chapter .pdf-body,
-  #page-icr-edit .pdf-body {
+  #page-icr-edit .pdf-body,
+  #page-parse .pdf-body {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
@@ -1123,7 +1135,8 @@
     padding: 24px;
   }
   #page-chapter .footer-nav,
-  #page-icr-edit .footer-nav {
+  #page-icr-edit .footer-nav,
+  #page-parse .footer-nav {
     flex-shrink: 0;
     position: relative;
     bottom: auto;
@@ -1758,7 +1771,9 @@
   function goToUpload() { showPage('page-upload'); clearInterval(timerInterval); }
   function goToChapter() {
     showPage('page-chapter');
-    setTimeout(() => { initChapter(); }, 0);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { initChapter(); });
+    });
   }
   function goToParse2() { showPage('page-parse'); }
 
@@ -2127,12 +2142,13 @@
     icrActiveId = null;
     icrPdfPage = 1;
     showPage('page-icr-edit');
-    // Use setTimeout to ensure DOM is visible before rendering
-    setTimeout(() => {
-      updateIcrCounts();
-      renderIcrList();
-      renderIcrPdf();
-    }, 0);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        updateIcrCounts();
+        renderIcrList();
+        renderIcrPdf();
+      });
+    });
   }
 
   function filteredIcr() {
