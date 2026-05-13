@@ -152,6 +152,9 @@
     display: flex;
     justify-content: space-between;
     flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
   }
   .btn {
     display: inline-flex;
@@ -510,18 +513,10 @@
   .clock-svg { width: 20px; height: 20px; }
 
   /* ════ CHAPTER PAGE ════ */
-  #page-chapter .main {
-    padding: 24px 32px;
-    align-items: stretch;
-  }
-  #page-chapter .content-wrap { max-width: 100%; display: flex; flex-direction: column; }
-
-  .chapter-body {
+    .chapter-body {
     display: grid;
     grid-template-columns: 380px 1fr;
     gap: 20px;
-    flex: 1;
-    min-height: 0;
   }
 
   /* Left panel */
@@ -532,7 +527,6 @@
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
   }
   .ch-panel-header {
     display: flex;
@@ -572,7 +566,6 @@
     text-align: center;
   }
   .ch-list {
-    flex: 1;
     overflow-y: auto;
     padding: 10px;
     display: flex;
@@ -659,7 +652,6 @@
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
   }
   .pdf-panel-header {
     display: flex;
@@ -727,7 +719,6 @@
     line-height: 32px;
   }
   .pdf-body {
-    flex: 1;
     overflow-y: auto;
     background: #e8e8e8;
     display: flex;
@@ -857,9 +848,10 @@
     border: 1.5px solid var(--border);
     border-radius: 10px;
     background: white;
-    overflow: hidden;
     transition: border-color 0.2s;
     cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
   }
   .icr-card:hover { border-color: #a0c8f0; }
   .icr-card.icr-editing { border-color: #4db8f0; border-width: 2px; }
@@ -870,14 +862,16 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
+    min-height: 48px;
   }
   .icr-status-icon {
-    width: 28px; height: 28px;
+    width: 28px !important; height: 28px !important;
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    display: flex !important; align-items: center; justify-content: center;
     flex-shrink: 0;
     font-size: 14px;
     font-weight: 700;
+    min-width: 28px;
   }
   .icr-icon-untouched { background: var(--gray-200); color: var(--gray-800); font-size: 16px; font-weight: 700; }
   .icr-icon-edit      { background: #3b82f6; color: white; }
@@ -908,6 +902,8 @@
     align-items: center;
     gap: 6px;
     padding: 0 14px 12px 52px;
+    min-height: 36px;
+    flex-wrap: nowrap;
   }
   .icr-field-input {
     border: 1.5px solid var(--border);
@@ -1032,6 +1028,120 @@
   }
   .icr-pdf-subtitle { font-size: 10px; color: #666; text-align: center; margin-bottom: 10px; }
   .icr-pdf-inner { padding: 0 16px 16px; }
+
+  /* ════ DUAL COLUMN PAGES (chapter + ICR edit) ════ */
+  #page-chapter.active,
+  #page-icr-edit.active {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  #page-chapter .header,
+  #page-icr-edit .header {
+    flex-shrink: 0;
+    position: relative;
+    top: auto;
+  }
+  #page-chapter .step-bar-wrap,
+  #page-icr-edit .step-bar-wrap {
+    flex-shrink: 0;
+    position: relative;
+    top: auto;
+  }
+  #page-chapter .main,
+  #page-icr-edit .main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 24px 32px;
+    display: flex;
+    align-items: stretch;
+  }
+  #page-chapter .content-wrap,
+  #page-icr-edit .content-wrap {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  #page-chapter .chapter-body,
+  #page-icr-edit .chapter-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    overflow: hidden;
+  }
+  #page-chapter .ch-panel,
+  #page-icr-edit .ch-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  #page-chapter .ch-list,
+  #page-icr-edit .ch-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #page-chapter .pdf-panel,
+  #page-icr-edit .pdf-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  #page-chapter .pdf-body,
+  #page-icr-edit .pdf-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    background: #e8e8e8;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+  }
+  #page-chapter .footer-nav,
+  #page-icr-edit .footer-nav {
+    flex-shrink: 0;
+    position: relative;
+    bottom: auto;
+  }
+
+  /* Sticky header/stepbar only on single-column pages */
+  #page-login .header,
+  #page-upload .header,
+  #page-parse .header,
+  #page-icr-loading .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  #page-upload .step-bar-wrap,
+  #page-parse .step-bar-wrap,
+  #page-icr-loading .step-bar-wrap {
+    position: sticky;
+    top: 56px;
+    z-index: 99;
+  }
 </style>
 </head>
 <body>
@@ -1481,8 +1591,8 @@
       <div class="step-item"><div class="step-dot">5</div><div class="step-label">第五步：成果報告</div><div class="step-sublabel">結果彙整呈現</div></div>
     </div>
   </div>
-  <div class="main" style="padding:24px 32px;">
-    <div class="content-wrap" style="max-width:100%; display:flex; flex-direction:column;">
+  <div class="main">
+    <div class="content-wrap">
       <div class="step-tag" style="margin-bottom:4px;">Step 3</div>
       <div class="page-title" style="margin-bottom:16px;">檢視編輯 OCR</div>
       <div class="chapter-body">
@@ -1584,7 +1694,10 @@
 
   function goToParse() { showPage('page-parse'); startTimer(); }
   function goToUpload() { showPage('page-upload'); clearInterval(timerInterval); }
-  function goToChapter() { showPage('page-chapter'); initChapter(); }
+  function goToChapter() {
+    showPage('page-chapter');
+    setTimeout(() => { initChapter(); }, 0);
+  }
   function goToParse2() { showPage('page-parse'); }
 
   let parseSeconds = 0, timerInterval = null;
@@ -1952,9 +2065,12 @@
     icrActiveId = null;
     icrPdfPage = 1;
     showPage('page-icr-edit');
-    updateIcrCounts();
-    renderIcrList();
-    renderIcrPdf();
+    // Use setTimeout to ensure DOM is visible before rendering
+    setTimeout(() => {
+      updateIcrCounts();
+      renderIcrList();
+      renderIcrPdf();
+    }, 0);
   }
 
   function filteredIcr() {
@@ -1989,8 +2105,9 @@
     const items = filteredIcr();
 
     items.forEach((d, idx) => {
-      const isEditing = d.id === icrActiveId && d.status === 'editing';
-      const isSelected = d.id === icrActiveId;
+      const isActive  = d.id === icrActiveId;
+      const isEditing = isActive; // show editing UI for any selected card
+      const isSelected = isActive;
 
       const card = document.createElement('div');
       card.className = 'icr-card' +
@@ -2016,7 +2133,7 @@
       };
 
       const confClass = d.high ? 'icr-conf-high' : 'icr-conf-low';
-      const editable = isEditing ? 'editable' : '';
+      const editable = isActive ? 'editable' : '';
 
       card.innerHTML = `
         <div class="icr-card-header">
@@ -2031,11 +2148,11 @@
           ${tagMap[d.status]}
         </div>
         <div class="icr-fields">
-          <input class="icr-field-input ${editable}" value="${d.l1}" data-field="l1" data-id="${d.id}" ${isEditing?'':'readonly'}>
+          <input class="icr-field-input ${editable}" value="${d.l1}" data-field="l1" data-id="${d.id}" ${isActive?'':'readonly'}>
           <span class="icr-field-sep">、</span>
-          <input class="icr-field-input ${editable}" value="${d.l2}" data-field="l2" data-id="${d.id}" ${isEditing?'':'readonly'}>
+          <input class="icr-field-input ${editable}" value="${d.l2}" data-field="l2" data-id="${d.id}" ${isActive?'':'readonly'}>
           <span class="icr-field-sep">、</span>
-          <input class="icr-field-input ${editable}" value="${d.l3}" data-field="l3" data-id="${d.id}" ${isEditing?'':'readonly'}>
+          <input class="icr-field-input ${editable}" value="${d.l3}" data-field="l3" data-id="${d.id}" ${isActive?'':'readonly'}>
           <span class="icr-field-name-display">${d.name}</span>
         </div>
         <div class="icr-actions">
