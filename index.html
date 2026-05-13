@@ -113,14 +113,14 @@
     color: var(--gray-400);
     text-align: center;
     line-height: 1.4;
-    max-width: 90px;
+    max-width: 160px;
   }
   .step-sublabel {
     font-size: 10px;
     color: var(--gray-400);
     text-align: center;
     line-height: 1.4;
-    max-width: 100px;
+    max-width: 160px;
   }
   .step-item.active .step-label,
   .step-item.done   .step-label  { color: var(--green-dark); font-weight: 500; }
@@ -1737,9 +1737,6 @@
   }
 
   function doLogin() {
-    const u = document.getElementById('login-user').value.trim();
-    const p = document.getElementById('login-pass').value.trim();
-    if (!u || !p) { alert('請輸入電子信箱與密碼'); return; }
     showPage('page-upload');
   }
 
