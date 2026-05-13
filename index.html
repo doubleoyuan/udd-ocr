@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台北市智慧城市 — PDF 掃描辨識系統</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:       #2bac76;
+    --green-light: #e8f7f1;
+    --green-dark:  #1e8a5e;
+    --navy:        #1c1f2e;
+    --gray-100:    #f5f6f8;
+    --gray-200:    #e9eaed;
+    --gray-400:    #a0a4b0;
+    --gray-600:    #6b7080;
+    --gray-800:    #333645;
+    --white:       #ffffff;
+    --border:      #dde0e8;
+    --shadow:      0 2px 12px rgba(0,0,0,0.08);
+    --radius:      10px;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page { display: none; flex-direction: column; min-height: 100vh; }
+  .page.active { display: flex; }
+
+  /* ── HEADER (white, light) ── */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    flex-shrink: 0;
+  }
+  .header-logo img {
+    height: 36px;
+    object-fit: contain;
+  }
+  .header-logo .fallback-text,
+  .header-logo .logo-text {
+    color: var(--navy);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── STEP BAR ── */
+  .step-bar-wrap {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px 0;
+    flex-shrink: 0;
+  }
+  .step-bar {
+    display: flex;
+    align-items: flex-start;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    padding-bottom: 14px;
+  }
+  .step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: calc(50% + 20px);
+    right: calc(-50% + 20px);
+    height: 1px;
+    background: var(--gray-200);
+  }
+  .step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+    background: var(--gray-200);
+    color: var(--gray-400);
+    flex-shrink: 0;
+  }
+  .step-item.active .step-dot { background: var(--green); color: white; }
+  .step-item.done .step-dot   { background: var(--green); color: white; }
+  .step-label {
+    font-size: 11px;
+    color: var(--gray-400);
+    text-align: center;
+    line-height: 1.4;
+    max-width: 90px;
+  }
+  .step-sublabel {
+    font-size: 10px;
+    color: var(--gray-400);
+    text-align: center;
+    line-height: 1.4;
+    max-width: 100px;
+  }
+  .step-item.active .step-label,
+  .step-item.done   .step-label  { color: var(--green-dark); font-weight: 500; }
+  .step-item.active .step-sublabel,
+  .step-item.done   .step-sublabel { color: var(--green-dark); }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    padding: 36px 40px;
+    display: flex;
+    justify-content: center;
+  }
+  .content-wrap { width: 100%; max-width: 960px; }
+  .step-tag { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 6px; letter-spacing: 0.04em; }
+  .page-title { font-size: 26px; font-weight: 700; color: var(--navy); margin-bottom: 28px; }
+
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  /* ── FOOTER ── */
+  .footer-nav {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: none;
+    outline: none;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: #2d3247; }
+  .btn-primary:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
+  .btn-ghost { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--gray-200); }
+  .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ════ LOGIN PAGE ════ */
+  #page-login {
+    background: var(--white);
+  }
+  #page-login .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+  }
+  .login-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--white);
+  }
+  .login-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 40px 44px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+  .login-scan-icon {
+    margin: 0 auto 18px;
+    color: var(--navy);
+  }
+  .login-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .login-sub {
+    font-size: 13px;
+    color: var(--gray-400);
+    margin-bottom: 30px;
+  }
+  .form-group { margin-bottom: 18px; text-align: left; }
+  .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-800); margin-bottom: 7px; }
+  .form-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--gray-800);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--navy); }
+  .remember-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    text-align: left;
+  }
+  .remember-row input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--navy); cursor: pointer;
+  }
+  .remember-row label { font-size: 13px; color: var(--gray-600); cursor: pointer; }
+  .btn-login {
+    width: 100%;
+    padding: 13px;
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.18s;
+    letter-spacing: 0.04em;
+  }
+  .btn-login:hover { background: #2d3247; }
+
+  /* ════ UPLOAD PAGE ════ */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 56px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+  .upload-icon { width: 52px; height: 52px; color: var(--green); }
+  .upload-text { font-size: 17px; font-weight: 600; color: var(--gray-800); }
+  .upload-btn {
+    background: var(--navy);
+    color: white;
+    border: none;
+    padding: 12px 36px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+  .upload-btn:hover { background: #2d3247; }
+
+  .file-card {
+    display: none;
+    align-items: center;
+    gap: 14px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 6px;
+  }
+  .file-card.visible { display: flex; }
+  .file-icon {
+    width: 38px; height: 38px;
+    background: var(--green-light);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--green);
+  }
+  .file-info { flex: 1; }
+  .file-name { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+  .file-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .file-remove {
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-400); padding: 4px; border-radius: 4px;
+    transition: color 0.15s; font-size: 18px; line-height: 1;
+  }
+  .file-remove:hover { color: #e05a5a; }
+  .upload-hint {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--gray-400); margin-top: 8px;
+  }
+
+  /* ════ PARSE PAGE ════ */
+  .parse-zone {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 52px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    margin-bottom: 24px; background: white;
+  }
+  /* ── Loading animation: scan line (chapter parse) ── */
+  .anim-scanner {
+    width: 120px; height: 140px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .anim-scanner .doc-body-bg {
+    position: absolute;
+    inset: 0;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .anim-scanner .doc-lines {
+    position: absolute;
+    top: 18px; left: 14px; right: 14px;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .anim-scanner .doc-line {
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+  }
+  .anim-scanner .doc-line:nth-child(2) { width: 75%; }
+  .anim-scanner .doc-line:nth-child(3) { width: 90%; }
+  .anim-scanner .doc-line:nth-child(4) { width: 60%; }
+  .anim-scanner .doc-line:nth-child(5) { width: 85%; }
+  .anim-scanner .doc-line:nth-child(6) { width: 70%; }
+  .anim-scanner .doc-line:nth-child(7) { width: 80%; }
+  .anim-scanner .doc-line:nth-child(8) { width: 55%; }
+  .anim-scanner .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--green) 30%, var(--green) 70%, transparent);
+    box-shadow: 0 0 12px 4px rgba(43,172,118,0.35);
+    animation: scanMove 2s ease-in-out infinite;
+    top: 0;
+  }
+  .anim-scanner .scan-glow {
+    position: absolute;
+    left: 0; right: 0;
+    height: 40px;
+    background: linear-gradient(180deg, rgba(43,172,118,0.12), transparent);
+    animation: scanMove 2s ease-in-out infinite;
+    top: 0;
+  }
+  .anim-scanner .doc-corner {
+    position: absolute;
+    top: 0; right: 0;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 20px 20px 0;
+    border-color: transparent var(--gray-200) transparent transparent;
+  }
+  @keyframes scanMove {
+    0%   { top: 0px; }
+    50%  { top: 110px; }
+    100% { top: 0px; }
+  }
+
+  /* ── Loading animation: OCR text recognition ── */
+  .anim-ocr {
+    width: 180px; height: 130px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .anim-ocr .ocr-doc {
+    position: absolute;
+    inset: 0;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+    overflow: hidden;
+  }
+  .anim-ocr .ocr-line-wrap {
+    position: relative;
+    height: 5px;
+  }
+  .anim-ocr .ocr-line-bg {
+    position: absolute; inset: 0;
+    background: var(--gray-200);
+    border-radius: 2px;
+  }
+  .anim-ocr .ocr-line-wrap:nth-child(2) .ocr-line-bg { width: 80%; }
+  .anim-ocr .ocr-line-wrap:nth-child(3) .ocr-line-bg { width: 95%; }
+  .anim-ocr .ocr-line-wrap:nth-child(4) .ocr-line-bg { width: 65%; }
+  .anim-ocr .ocr-line-wrap:nth-child(5) .ocr-line-bg { width: 88%; }
+  .anim-ocr .ocr-line-wrap:nth-child(6) .ocr-line-bg { width: 72%; }
+  .anim-ocr .ocr-line-wrap:nth-child(7) .ocr-line-bg { width: 90%; }
+
+  /* highlight boxes that appear sequentially */
+  .anim-ocr .ocr-box {
+    position: absolute;
+    border: 2px solid #f39c12;
+    border-radius: 2px;
+    background: rgba(243,156,18,0.08);
+    opacity: 0;
+  }
+  .anim-ocr .ocr-box-1 {
+    top: 10px; left: 12px; width: 60px; height: 9px;
+    animation: ocrBox 3s ease-in-out infinite 0s;
+  }
+  .anim-ocr .ocr-box-2 {
+    top: 25px; left: 12px; width: 100px; height: 9px;
+    animation: ocrBox 3s ease-in-out infinite 0.6s;
+  }
+  .anim-ocr .ocr-box-3 {
+    top: 40px; left: 12px; width: 80px; height: 9px;
+    animation: ocrBox 3s ease-in-out infinite 1.2s;
+  }
+  .anim-ocr .ocr-box-4 {
+    top: 55px; left: 12px; width: 55px; height: 9px;
+    animation: ocrBox 3s ease-in-out infinite 1.8s;
+  }
+  .anim-ocr .ocr-box-5 {
+    top: 70px; left: 12px; width: 90px; height: 9px;
+    animation: ocrBox 3s ease-in-out infinite 2.4s;
+  }
+  /* green confirmed box */
+  .anim-ocr .ocr-box-done {
+    position: absolute;
+    border: 2px solid var(--green);
+    border-radius: 2px;
+    background: rgba(43,172,118,0.08);
+    top: 10px; left: 12px; width: 60px; height: 9px;
+    animation: ocrDone 3s ease-in-out infinite 0.4s;
+    opacity: 0;
+  }
+  @keyframes ocrBox {
+    0%   { opacity: 0; }
+    10%  { opacity: 1; }
+    30%  { opacity: 1; }
+    45%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @keyframes ocrDone {
+    0%   { opacity: 0; }
+    15%  { opacity: 0; }
+    30%  { opacity: 1; }
+    50%  { opacity: 1; }
+    65%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  .parse-label { font-size: 18px; font-weight: 700; color: var(--gray-800); }
+  .parse-timer { font-size: 14px; color: var(--gray-600); }
+
+  .task-list { display: flex; flex-direction: column; gap: 10px; }
+  .task-item {
+    display: flex; align-items: center; gap: 14px;
+    background: white; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 15px 18px; transition: border-color 0.3s;
+  }
+  .task-item.done { border-color: var(--green); }
+  .task-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .task-icon.done-icon { background: var(--green); color: white; }
+  .task-icon.spin-icon { color: var(--green); }
+  .task-icon.wait-icon { color: var(--gray-400); }
+  .task-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--gray-800); }
+  .task-status { font-size: 13px; }
+  .task-status.s-done    { color: var(--green); font-weight: 600; }
+  .task-status.s-running { color: var(--gray-600); }
+  .task-status.s-wait    { color: var(--gray-400); }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2.5px solid var(--green-light);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .clock-svg { width: 20px; height: 20px; }
+
+  /* ════ CHAPTER PAGE ════ */
+  #page-chapter .main {
+    padding: 24px 32px;
+    align-items: stretch;
+  }
+  #page-chapter .content-wrap { max-width: 100%; display: flex; flex-direction: column; }
+
+  .chapter-body {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Left panel */
+  .ch-panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .ch-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .ch-panel-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .ch-nav {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .ch-nav-btn {
+    background: white;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--gray-600);
+    font-size: 13px;
+    transition: background 0.15s;
+    display: flex; align-items: center;
+  }
+  .ch-nav-btn:hover { background: var(--gray-100); }
+  .ch-nav-count {
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-width: 52px;
+    text-align: center;
+  }
+  .ch-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ch-item {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .ch-item.ch-expanded { border-color: #4db8f0; }
+  .ch-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    background: white;
+    transition: background 0.15s;
+  }
+  .ch-header:hover { background: var(--gray-100); }
+  .ch-expanded .ch-header { background: #f0faff; }
+  .ch-arrow { font-size: 11px; color: var(--gray-400); width: 14px; flex-shrink: 0; }
+  .ch-expanded .ch-arrow { color: #4db8f0; }
+  .ch-num { font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .ch-name { font-size: 13px; color: var(--gray-800); flex: 1; }
+  .ch-pages { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+
+  .ch-thumbs {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px 14px;
+    background: #f8faff;
+    overflow-x: auto;
+  }
+  .ch-thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .thumb-mock {
+    width: 88px;
+    height: 110px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 4px;
+    transition: border-color 0.15s;
+  }
+  .ch-thumb:hover .thumb-mock { border-color: #4db8f0; }
+  .ch-thumb.ch-thumb-active .thumb-mock { border-color: #4db8f0; border-width: 2px; }
+  .thumb-label { font-size: 11px; color: var(--gray-600); }
+
+  /* mock doc inside thumb */
+  .md-title { font-size: 4px; font-weight: 700; text-align: center; margin-bottom: 3px; color: #333; }
+  .md-meta  { font-size: 3.5px; color: #666; margin-bottom: 2px; }
+  .md-line  { height: 2.5px; background: #ddd; border-radius: 1px; margin-bottom: 2px; }
+  .md-line.w90 { width: 90%; }
+  .md-line.w80 { width: 80%; }
+  .md-line.w75 { width: 75%; }
+  .md-line.w70 { width: 70%; }
+  .md-line.w60 { width: 60%; }
+  .md-table { border: 0.5px solid #ccc; margin-top: 3px; }
+  .md-tr { display: flex; border-bottom: 0.5px solid #ddd; }
+  .md-tr:last-child { border-bottom: none; }
+  .md-td { flex: 1; height: 6px; border-right: 0.5px solid #ddd; }
+  .md-td:last-child { border-right: none; }
+  .md-td.w2 { flex: 2; }
+  .md-photos { display: flex; gap: 2px; margin: 2px 0; }
+  .md-photo { flex: 1; height: 24px; background: #e0e0e0; border-radius: 1px; }
+  .md-section { font-size: 3.5px; font-weight: 700; margin: 2px 0 1px; color: #333; }
+
+  /* Right panel — PDF preview */
+  .pdf-panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .pdf-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .pdf-nav {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pdf-nav-btn {
+    background: white;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--gray-600);
+    font-size: 13px;
+    transition: background 0.15s;
+    display: flex; align-items: center;
+  }
+  .pdf-nav-btn:hover { background: var(--gray-100); }
+  .pdf-nav-count {
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-width: 72px;
+    text-align: center;
+  }
+  .pdf-zoom {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pdf-zoom-btn {
+    background: white;
+    border: none;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    color: var(--gray-600);
+    font-size: 16px;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pdf-zoom-btn:hover { background: var(--gray-100); }
+  .pdf-zoom-val {
+    padding: 0 10px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-width: 52px;
+    text-align: center;
+    line-height: 32px;
+  }
+  .pdf-body {
+    flex: 1;
+    overflow-y: auto;
+    background: #e8e8e8;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* Document page styles */
+  .doc-page {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    min-height: 780px;
+    padding: 40px 44px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+    font-size: 13px;
+    color: #222;
+    line-height: 1.7;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .doc-header-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+  }
+  .doc-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    text-align: center;
+    margin: 8px 0 4px;
+  }
+  .doc-subtitle { font-size: 12px; color: #666; text-align: center; }
+  .doc-meta-row { display: flex; gap: 24px; font-size: 12px; color: #555; }
+  .doc-section { font-size: 13px; font-weight: 700; margin-top: 6px; }
+  .doc-body { font-size: 13px; color: #444; line-height: 1.8; }
+  .doc-note { font-size: 11px; color: #888; margin-top: auto; padding-top: 8px; border-top: 1px solid #eee; }
+  .doc-footer { font-size: 11px; color: #aaa; text-align: center; border-top: 1px solid #eee; padding-top: 8px; }
+
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .doc-table th {
+    background: #f0f2f5;
+    padding: 8px 10px;
+    text-align: center;
+    border: 1px solid #d0d4dc;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .doc-table td {
+    padding: 7px 10px;
+    text-align: center;
+    border: 1px solid #e0e3ea;
+    color: #444;
+  }
+  .doc-table tr:nth-child(even) td { background: #fafbfc; }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .photo-box { display: flex; flex-direction: column; gap: 6px; }
+  .photo-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #d0d8e0 0%, #b8c4d0 100%);
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  .ch-thumb-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 110px;
+    border: 1.5px dashed var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--gray-400);
+    flex-shrink: 0;
+  }
+
+  /* Drag states */
+  .ch-thumb-dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  .ch-thumb-drag-over .thumb-mock {
+    border-color: var(--green) !important;
+    border-width: 2px !important;
+    background: var(--green-light);
+  }
+  .ch-drop-target {
+    background: #e8f7f1 !important;
+    border-bottom: 2.5px solid var(--green) !important;
+  }
+  .ch-thumb { cursor: grab; }
+  .ch-thumb:active { cursor: grabbing; }
+
+  /* ════ ICR PAGE ════ */
+  .icr-filter-tag {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    opacity: 0.45;
+  }
+  .icr-filter-tag.active { opacity: 1; }
+  .icr-tag-high { background: #e6f9f0; color: #1e8a5e; border-color: #b6e8d2; }
+  .icr-tag-high.active { background: #d0f2e4; border-color: var(--green); }
+  .icr-tag-low  { background: #fdf0f0; color: #c0392b; border-color: #f5c0bb; }
+  .icr-tag-low.active  { background: #fde0de; border-color: #e05a5a; }
+
+  /* ICR card */
+  .icr-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: white;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .icr-card:hover { border-color: #a0c8f0; }
+  .icr-card.icr-editing { border-color: #4db8f0; border-width: 2px; }
+  .icr-card.icr-selected { border-color: #4db8f0; }
+
+  .icr-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+  .icr-status-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .icr-icon-untouched { background: var(--gray-200); color: var(--gray-800); font-size: 16px; font-weight: 700; }
+  .icr-icon-edit      { background: #3b82f6; color: white; }
+  .icr-icon-confirmed { background: var(--green); color: white; }
+
+  .icr-meta { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-400); }
+  .icr-meta-page { color: var(--gray-600); font-weight: 500; }
+  .icr-meta-id   { color: var(--gray-400); }
+  .icr-meta-conf { font-weight: 600; }
+  .icr-conf-high { color: var(--green); }
+  .icr-conf-low  { color: #e05a5a; }
+  .icr-meta-dot  { color: var(--gray-200); }
+
+  .icr-status-tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .icr-tag-untouched { background: var(--gray-100); color: var(--gray-400); }
+  .icr-tag-edited    { background: #fff3e0; color: #e67e22; }
+  .icr-tag-editing   { background: #e8f4ff; color: #3b82f6; }
+
+  /* ICR fields row */
+  .icr-fields {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px 12px 52px;
+  }
+  .icr-field-input {
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--gray-400);
+    background: transparent;
+    width: 56px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    pointer-events: none;
+    border-color: transparent;
+  }
+  .icr-field-input.editable {
+    background: white;
+    pointer-events: auto;
+    color: var(--gray-800);
+    border-color: var(--border);
+  }
+  .icr-field-input.editable:focus { border-color: #4db8f0; }
+  .icr-field-sep { color: var(--gray-400); font-size: 14px; }
+  .icr-field-name {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--gray-800);
+    background: var(--gray-100);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    pointer-events: none;
+  }
+  .icr-field-name.editable {
+    background: white;
+    pointer-events: auto;
+  }
+  .icr-field-name.editable:focus { border-color: #4db8f0; }
+  .icr-field-name-display {
+    flex: 1;
+    padding: 6px 4px;
+    font-size: 13px;
+    color: var(--gray-400);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Action buttons */
+  .icr-actions {
+    display: none;
+    gap: 8px;
+    padding: 0 14px 12px;
+    justify-content: flex-end;
+  }
+  .icr-card.icr-editing .icr-actions { display: flex; }
+  .icr-btn-ignore {
+    padding: 6px 16px; border-radius: 6px;
+    border: 1.5px solid #a0a4b0;
+    background: white; color: var(--gray-600);
+    font-size: 13px; font-family: inherit; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .icr-btn-ignore:hover { background: var(--gray-100); border-color: var(--gray-800); }
+  .icr-btn-confirm {
+    padding: 6px 16px; border-radius: 6px;
+    border: none;
+    background: #3b82f6; color: white;
+    font-size: 13px; font-family: inherit; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .icr-btn-confirm:hover { background: #2563eb; }
+
+  /* PDF highlight boxes */
+  .icr-pdf-wrap {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    min-height: 780px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+    position: relative;
+    overflow: hidden;
+  }
+  .icr-pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .icr-pdf-table th {
+    background: #f0f2f5;
+    padding: 6px 8px;
+    border: 1px solid #d0d4dc;
+    font-weight: 600;
+    font-size: 10px;
+    color: #444;
+    text-align: center;
+  }
+  .icr-pdf-table td {
+    padding: 5px 8px;
+    border: 1px solid #e0e3ea;
+    font-size: 10px;
+    color: #444;
+    text-align: center;
+    position: relative;
+  }
+  .icr-pdf-table tr.row-orange td { outline: 2px solid #f39c12; outline-offset: -2px; background: #fffbf0; }
+  .icr-pdf-table tr.row-red    td { outline: 2px solid #e05a5a; outline-offset: -2px; background: #fff5f5; }
+  .icr-pdf-header {
+    display: flex; justify-content: space-between;
+    padding: 12px 16px 8px;
+    font-size: 10px; color: #888;
+    border-bottom: 1px solid #eee;
+  }
+  .icr-pdf-title {
+    font-size: 13px; font-weight: 700;
+    text-align: center; padding: 10px 0 8px;
+    color: var(--navy);
+  }
+  .icr-pdf-subtitle { font-size: 10px; color: #666; text-align: center; margin-bottom: 10px; }
+  .icr-pdf-inner { padding: 0 16px 16px; }
+</style>
+</head>
+<body>
+
+<!-- ════ PAGE 1: LOGIN ════ -->
+<div class="page active" id="page-login">
+  <div class="header">
+    <div class="header-logo">
+      <span class="logo-text">臺北市政府都市發展局</span>
+    </div>
+  </div>
+
+  <div class="login-center">
+    <div class="login-card">
+      <!-- scan icon -->
+      <svg class="login-scan-icon" width="44" height="36" viewBox="0 0 44 36" fill="none">
+        <rect x="0.75" y="0.75" width="10" height="10" rx="1.25" stroke="#1c1f2e" stroke-width="1.5"/>
+        <rect x="33.25" y="0.75" width="10" height="10" rx="1.25" stroke="#1c1f2e" stroke-width="1.5"/>
+        <rect x="0.75" y="25.25" width="10" height="10" rx="1.25" stroke="#1c1f2e" stroke-width="1.5"/>
+        <rect x="33.25" y="25.25" width="10" height="10" rx="1.25" stroke="#1c1f2e" stroke-width="1.5"/>
+        <line x1="4" y1="18" x2="40" y2="18" stroke="#2bac76" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+
+      <div class="login-title">台北市智慧城市</div>
+      <div class="login-sub">創新實證補助試辦計畫</div>
+
+      <div class="form-group">
+        <label class="form-label">電子信箱</label>
+        <input class="form-input" type="text" placeholder="請輸入您的電子信箱" id="login-user">
+      </div>
+      <div class="form-group">
+        <label class="form-label">密碼</label>
+        <input class="form-input" type="password" placeholder="請輸入您的密碼" id="login-pass">
+      </div>
+      <div class="remember-row">
+        <input type="checkbox" id="remember-me">
+        <label for="remember-me">記住我的登入資訊</label>
+      </div>
+      <button class="btn-login" onclick="doLogin()">登入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE 2: UPLOAD ════ -->
+<div class="page" id="page-upload">
+  <div class="header">
+    <div class="header-logo">
+      <span class="logo-text">臺北市政府都市發展局</span>
+    </div>
+  </div>
+
+  <div class="step-bar-wrap">
+    <div class="step-bar">
+      <div class="step-item active">
+        <div class="step-dot">1</div>
+        <div class="step-label">第一步：上傳 PDF</div>
+        <div class="step-sublabel">選擇並上傳 PDF 檔案</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">2</div>
+        <div class="step-label">第二步：檢視/編輯章節</div>
+        <div class="step-sublabel">核對章節切分與頁碼範圍</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">3</div>
+        <div class="step-label">第三步：檢視/編輯ICR</div>
+        <div class="step-sublabel">標記覆核系統 ICR結果</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">4</div>
+        <div class="step-label">第四步：檢視/編輯跨表格資料</div>
+        <div class="step-sublabel">跨表格資料勘誤比對</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">5</div>
+        <div class="step-label">第五步：成果報告</div>
+        <div class="step-sublabel">結果彙整呈現</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="content-wrap">
+      <div class="step-tag">Step 1</div>
+      <div class="page-title">上傳 PDF</div>
+      <div class="card" style="padding: 24px;">
+        <div class="upload-zone" id="upload-zone" onclick="triggerUpload()">
+          <svg class="upload-icon" viewBox="0 0 52 52" fill="none">
+            <circle cx="26" cy="26" r="25" stroke="currentColor" stroke-width="1.5" opacity="0.15"/>
+            <path d="M26 34V20M26 20L20 26M26 20L32 26" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 36h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div class="upload-text">將 PDF 檔案拖曳至此處</div>
+          <button class="upload-btn" onclick="event.stopPropagation(); triggerUpload()">選擇 PDF 檔案</button>
+        </div>
+
+        <div class="file-card" id="file-card">
+          <div class="file-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="1" width="11" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M14 1l3 3v12a2 2 0 01-2 2H5a2 2 0 01-2-2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M14 1v3h3" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 9h6M7 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="file-info">
+            <div class="file-name">施工報告書.pdf</div>
+            <div class="file-meta">大小：447MB・頁數：683頁</div>
+          </div>
+          <button class="file-remove" onclick="removeFile()" title="移除檔案">×</button>
+        </div>
+
+        <div class="upload-hint">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="#a0a4b0" stroke-width="1.2"/>
+            <path d="M7 6.5v4M7 4.5v.5" stroke="#a0a4b0" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          支援 PDF 檔案・最大 500MB
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" disabled>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      上一步
+    </button>
+    <button class="btn btn-primary" id="btn-next-upload" onclick="goToParse()" disabled>
+      下一步
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ════ PAGE 3: PARSING ════ -->
+<div class="page" id="page-parse">
+  <div class="header">
+    <div class="header-logo">
+      <span class="logo-text">臺北市政府都市發展局</span>
+    </div>
+  </div>
+
+  <div class="step-bar-wrap">
+    <div class="step-bar">
+      <div class="step-item done">
+        <div class="step-dot">✓</div>
+        <div class="step-label">第一步：上傳 PDF</div>
+        <div class="step-sublabel">選擇並上傳 PDF 檔案</div>
+      </div>
+      <div class="step-item active">
+        <div class="step-dot">2</div>
+        <div class="step-label">第二步：檢視/編輯章節</div>
+        <div class="step-sublabel">核對章節切分與頁碼範圍</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">3</div>
+        <div class="step-label">第三步：檢視/編輯ICR</div>
+        <div class="step-sublabel">標記覆核系統 ICR結果</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">4</div>
+        <div class="step-label">第四步：檢視/編輯跨表格資料</div>
+        <div class="step-sublabel">跨表格資料勘誤比對</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">5</div>
+        <div class="step-label">第五步：成果報告</div>
+        <div class="step-sublabel">結果彙整呈現</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="content-wrap">
+      <div class="step-tag">Step 2</div>
+      <div class="page-title">解析 PDF／分割章節</div>
+
+      <div class="card parse-zone">
+        <div class="anim-scanner">
+          <div class="doc-body-bg">
+            <div class="doc-lines">
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+              <div class="doc-line"></div>
+            </div>
+            <div class="scan-glow"></div>
+            <div class="scan-line"></div>
+            <div class="doc-corner"></div>
+          </div>
+        </div>
+        <div class="parse-label">正在辨識章節結構</div>
+        <div class="parse-timer" id="parse-timer">已花費 0 分 0 秒…</div>
+      </div>
+
+      <div class="task-list">
+        <div class="task-item done">
+          <div class="task-icon done-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 7l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="task-name">掃描文件內容</div>
+          <div class="task-status s-done">完成</div>
+        </div>
+        <div class="task-item">
+          <div class="task-icon spin-icon"><div class="spinner"></div></div>
+          <div class="task-name">辨識章節結構</div>
+          <div class="task-status s-running">進行中</div>
+        </div>
+        <div class="task-item">
+          <div class="task-icon wait-icon">
+            <svg class="clock-svg" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="task-name">分離文件區塊</div>
+          <div class="task-status s-wait">等待中</div>
+        </div>
+        <div class="task-item">
+          <div class="task-icon wait-icon">
+            <svg class="clock-svg" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="task-name">建立資料索引</div>
+          <div class="task-status s-wait">等待中</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="goToUpload()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      上一步
+    </button>
+    <button class="btn btn-primary" onclick="goToChapter()">
+      下一步
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ════ PAGE 4: CHAPTER INSPECT ════ -->
+<div class="page" id="page-chapter">
+  <div class="header">
+    <div class="header-logo">
+      <span class="logo-text">臺北市政府都市發展局</span>
+    </div>
+  </div>
+
+  <div class="step-bar-wrap">
+    <div class="step-bar">
+      <div class="step-item done">
+        <div class="step-dot">✓</div>
+        <div class="step-label">第一步：上傳 PDF</div>
+        <div class="step-sublabel">選擇並上傳 PDF 檔案</div>
+      </div>
+      <div class="step-item active">
+        <div class="step-dot">2</div>
+        <div class="step-label">第二步：檢視/編輯章節</div>
+        <div class="step-sublabel">核對章節切分與頁碼範圍</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">3</div>
+        <div class="step-label">第三步：檢視/編輯ICR</div>
+        <div class="step-sublabel">標記覆核系統 ICR結果</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">4</div>
+        <div class="step-label">第四步：檢視/編輯跨表格資料</div>
+        <div class="step-sublabel">跨表格資料勘誤比對</div>
+      </div>
+      <div class="step-item">
+        <div class="step-dot">5</div>
+        <div class="step-label">第五步：成果報告</div>
+        <div class="step-sublabel">結果彙整呈現</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="content-wrap">
+      <div class="step-tag" style="margin-bottom:4px;">Step 2</div>
+      <div class="page-title" style="margin-bottom:16px;">檢視／編輯章節</div>
+
+      <div class="chapter-body">
+
+        <!-- LEFT: chapter list -->
+        <div class="ch-panel">
+          <div class="ch-panel-header">
+            <div class="ch-panel-title">章節結構</div>
+            <div class="ch-nav">
+              <button class="ch-nav-btn" onclick="chNavPrev()">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                上一章
+              </button>
+              <div class="ch-nav-count"><span id="ch-nav-cur">1</span> / 10</div>
+              <button class="ch-nav-btn" onclick="chNavNext()">
+                下一章
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="ch-list" id="chapter-list"></div>
+        </div>
+
+        <!-- RIGHT: PDF preview -->
+        <div class="pdf-panel">
+          <div class="pdf-panel-header">
+            <div class="pdf-nav">
+              <button class="pdf-nav-btn" onclick="pdfPrev()">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                上一頁
+              </button>
+              <div class="pdf-nav-count"><span id="pdf-cur">1 / 92</span></div>
+              <button class="pdf-nav-btn" onclick="pdfNext()">
+                下一頁
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="pdf-zoom">
+              <button class="pdf-zoom-btn">−</button>
+              <div class="pdf-zoom-val">100%</div>
+              <button class="pdf-zoom-btn">+</button>
+            </div>
+          </div>
+          <div class="pdf-body">
+            <div id="pdf-content"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="goToParse2()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      上一步
+    </button>
+    <button class="btn btn-primary" onclick="goToIcrLoading()">
+      下一步
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ════ PAGE 5: ICR LOADING ════ -->
+<div class="page" id="page-icr-loading">
+  <div class="header">
+    <div class="header-logo"><span class="logo-text">臺北市政府都市發展局</span></div>
+  </div>
+  <div class="step-bar-wrap">
+    <div class="step-bar">
+      <div class="step-item done"><div class="step-dot">✓</div><div class="step-label">第一步：上傳 PDF</div><div class="step-sublabel">選擇並上傳 PDF 檔案</div></div>
+      <div class="step-item done"><div class="step-dot">✓</div><div class="step-label">第二步：檢視/編輯章節</div><div class="step-sublabel">核對章節切分與頁碼範圍</div></div>
+      <div class="step-item active"><div class="step-dot">3</div><div class="step-label">第三步：檢視/編輯ICR</div><div class="step-sublabel">標記覆核系統 ICR結果</div></div>
+      <div class="step-item"><div class="step-dot">4</div><div class="step-label">第四步：檢視/編輯跨表格資料</div><div class="step-sublabel">跨表格資料勘誤比對</div></div>
+      <div class="step-item"><div class="step-dot">5</div><div class="step-label">第五步：成果報告</div><div class="step-sublabel">結果彙整呈現</div></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="content-wrap">
+      <div class="step-tag">Step 3</div>
+      <div class="page-title">檢視編輯 OCR</div>
+      <div class="card parse-zone" style="margin-bottom:20px;">
+        <div class="anim-ocr">
+          <div class="ocr-doc">
+            <div class="ocr-line-wrap"><div class="ocr-line-bg"></div></div>
+            <div class="ocr-line-wrap"><div class="ocr-line-bg"></div></div>
+            <div class="ocr-line-wrap"><div class="ocr-line-bg"></div></div>
+            <div class="ocr-line-wrap"><div class="ocr-line-bg"></div></div>
+            <div class="ocr-line-wrap"><div class="ocr-line-bg"></div></div>
+            <div class="ocr-line-wrap"><div class="ocr-line-bg"></div></div>
+          </div>
+          <div class="ocr-box ocr-box-1"></div>
+          <div class="ocr-box ocr-box-2"></div>
+          <div class="ocr-box ocr-box-3"></div>
+          <div class="ocr-box ocr-box-4"></div>
+          <div class="ocr-box ocr-box-5"></div>
+          <div class="ocr-box-done"></div>
+        </div>
+        <div class="parse-label">正在辨識文字並建立樹狀結構...</div>
+        <div class="parse-timer" id="icr-timer">已花費 0 分 0 秒…</div>
+      </div>
+      <div class="task-list">
+        <div class="task-item done">
+          <div class="task-icon done-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="task-name">執行智慧辨識</div>
+          <div class="task-status s-done">完成</div>
+        </div>
+        <div class="task-item done">
+          <div class="task-icon done-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="task-name">分析文件欄位</div>
+          <div class="task-status s-done">完成</div>
+        </div>
+        <div class="task-item">
+          <div class="task-icon spin-icon"><div class="spinner"></div></div>
+          <div class="task-name">比對模型結果</div>
+          <div class="task-status s-running">進行中</div>
+        </div>
+        <div class="task-item">
+          <div class="task-icon wait-icon"><svg class="clock-svg" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="task-name">驗證資料一致性</div>
+          <div class="task-status s-wait">等待中</div>
+        </div>
+        <div class="task-item">
+          <div class="task-icon wait-icon"><svg class="clock-svg" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="task-name">生成結構資料</div>
+          <div class="task-status s-wait">等待中</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="showPage('page-chapter')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      上一步
+    </button>
+    <button class="btn btn-primary" onclick="goToIcrEdit()">
+      下一步
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ════ PAGE 6: ICR EDIT ════ -->
+<div class="page" id="page-icr-edit">
+  <div class="header">
+    <div class="header-logo"><span class="logo-text">臺北市政府都市發展局</span></div>
+  </div>
+  <div class="step-bar-wrap">
+    <div class="step-bar">
+      <div class="step-item done"><div class="step-dot">✓</div><div class="step-label">第一步：上傳 PDF</div><div class="step-sublabel">選擇並上傳 PDF 檔案</div></div>
+      <div class="step-item done"><div class="step-dot">✓</div><div class="step-label">第二步：檢視/編輯章節</div><div class="step-sublabel">核對章節切分與頁碼範圍</div></div>
+      <div class="step-item active"><div class="step-dot">3</div><div class="step-label">第三步：檢視/編輯ICR</div><div class="step-sublabel">標記覆核系統 ICR結果</div></div>
+      <div class="step-item"><div class="step-dot">4</div><div class="step-label">第四步：檢視/編輯跨表格資料</div><div class="step-sublabel">跨表格資料勘誤比對</div></div>
+      <div class="step-item"><div class="step-dot">5</div><div class="step-label">第五步：成果報告</div><div class="step-sublabel">結果彙整呈現</div></div>
+    </div>
+  </div>
+  <div class="main" style="padding:24px 32px;">
+    <div class="content-wrap" style="max-width:100%; display:flex; flex-direction:column;">
+      <div class="step-tag" style="margin-bottom:4px;">Step 3</div>
+      <div class="page-title" style="margin-bottom:16px;">檢視編輯 OCR</div>
+      <div class="chapter-body">
+
+        <!-- LEFT: ICR list -->
+        <div class="ch-panel">
+          <div class="ch-panel-header" style="flex-direction:column; align-items:flex-start; gap:10px; padding:14px 16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <div class="ch-panel-title">共 <span id="icr-count">31</span> 筆資料</div>
+              <div class="ch-nav">
+                <button class="ch-nav-btn" onclick="icrNavPrev()">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  上一個
+                </button>
+                <div class="ch-nav-count"><span id="icr-nav-cur">1</span> / <span id="icr-nav-total">20</span></div>
+                <button class="ch-nav-btn" onclick="icrNavNext()">
+                  下一個
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="icr-filter-tag icr-tag-high active" id="tag-high" onclick="toggleFilter('high')">信心指數高：<span id="tag-high-count">0</span> 筆</button>
+              <button class="icr-filter-tag icr-tag-low" id="tag-low" onclick="toggleFilter('low')">信心指數低：<span id="tag-low-count">0</span> 筆</button>
+            </div>
+          </div>
+          <div class="ch-list" id="icr-list" style="gap:10px;"></div>
+        </div>
+
+        <!-- RIGHT: PDF mock preview -->
+        <div class="pdf-panel">
+          <div class="pdf-panel-header">
+            <div class="pdf-nav">
+              <button class="pdf-nav-btn" onclick="icrPdfPrev()">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                上一頁
+              </button>
+              <div class="pdf-nav-count"><span id="icr-pdf-cur">1 / 500</span></div>
+              <button class="pdf-nav-btn" onclick="icrPdfNext()">
+                下一頁
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="pdf-zoom">
+              <button class="pdf-zoom-btn">−</button>
+              <div class="pdf-zoom-val">100%</div>
+              <button class="pdf-zoom-btn">+</button>
+            </div>
+          </div>
+          <div class="pdf-body">
+            <div id="icr-pdf-content"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="showPage('page-icr-loading')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      上一步
+    </button>
+    <button class="btn btn-primary">
+      下一步
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+<script>
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('page-login').classList.contains('active')) doLogin();
+  });
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function doLogin() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value.trim();
+    if (!u || !p) { alert('請輸入電子信箱與密碼'); return; }
+    showPage('page-upload');
+  }
+
+  function triggerUpload() {
+    document.getElementById('file-card').classList.add('visible');
+    document.getElementById('btn-next-upload').disabled = false;
+  }
+  function removeFile() {
+    document.getElementById('file-card').classList.remove('visible');
+    document.getElementById('btn-next-upload').disabled = true;
+  }
+
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop',     e => { e.preventDefault(); zone.classList.remove('dragover'); triggerUpload(); });
+
+  function goToParse() { showPage('page-parse'); startTimer(); }
+  function goToUpload() { showPage('page-upload'); clearInterval(timerInterval); }
+  function goToChapter() { showPage('page-chapter'); initChapter(); }
+  function goToParse2() { showPage('page-parse'); }
+
+  let parseSeconds = 0, timerInterval = null;
+  function startTimer() {
+    parseSeconds = 0;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      parseSeconds++;
+      const m = Math.floor(parseSeconds / 60), s = parseSeconds % 60;
+      document.getElementById('parse-timer').textContent = `已花費 ${m} 分 ${s} 秒…`;
+    }, 1000);
+  }
+
+  /* ══════════════════════════════════
+     CHAPTER PAGE LOGIC (with drag-and-drop)
+  ══════════════════════════════════ */
+  const NUMS = ['一','二','三','四','五','六','七','八','九','十'];
+
+  // Data model: chapters is array of { title, type, pageIds[] }
+  // pageIds are unique string IDs for each page
+  let chapters = [];
+  let expandedChapter = 0;
+  let currentPageId = null; // which page is shown in right panel
+  let dragInfo = null;      // { fromChapter, fromIndex, pageId }
+
+  function initChapterData() {
+    const defs = [
+      { title: '工程估驗計價總表',        type: 'table', count: 2  },
+      { title: '工程估驗計價明細表',      type: 'table', count: 10 },
+      { title: '估驗計價與監造數量差異表', type: 'table', count: 10 },
+      { title: '估驗數量計算方式',        type: 'table', count: 10 },
+      { title: '施工日誌',               type: 'text',  count: 10 },
+      { title: '施工數量彙整表',          type: 'table', count: 10 },
+      { title: '監造日誌',               type: 'text',  count: 10 },
+      { title: '監造日數量彙整表',        type: 'table', count: 10 },
+      { title: '施工照片',               type: 'photo', count: 10 },
+      { title: '其他',                   type: 'table', count: 10 },
+    ];
+    let pid = 0;
+    chapters = defs.map((d, ci) => ({
+      title: d.title,
+      type:  d.type,
+      originalCi: ci,
+      pageIds: Array.from({ length: d.count }, () => `p${pid++}`)
+    }));
+    currentPageId = chapters[0].pageIds[0];
+  }
+
+  function initChapter() {
+    initChapterData();
+    expandedChapter = 0;
+    currentPageId = chapters[0].pageIds[0];
+    renderChapterList();
+    renderPdfPage();
+  }
+
+  /* ── RENDER LEFT PANEL ── */
+  function renderChapterList() {
+    const list = document.getElementById('chapter-list');
+    list.innerHTML = '';
+    chapters.forEach((ch, ci) => {
+      const isExpanded = ci === expandedChapter;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'ch-item' + (isExpanded ? ' ch-expanded' : '');
+      wrapper.dataset.ci = ci;
+
+      /* Header — click to expand, also drop target */
+      const hdr = document.createElement('div');
+      hdr.className = 'ch-header';
+      hdr.innerHTML = `
+        <span class="ch-arrow">${isExpanded ? '▼' : '▲'}</span>
+        <span class="ch-num">第${NUMS[ci]}章</span>
+        <span class="ch-name">${ch.title}</span>
+        <span class="ch-pages">共 ${ch.pageIds.length} 頁</span>`;
+
+      hdr.addEventListener('click', () => {
+        expandedChapter = ci;
+        currentPageId = ch.pageIds[0];
+        renderChapterList();
+        renderPdfPage();
+      });
+
+      // Drop target: header accepts pages from other chapters
+      hdr.addEventListener('dragover', e => {
+        if (dragInfo && dragInfo.fromChapter !== ci) {
+          e.preventDefault();
+          hdr.classList.add('ch-drop-target');
+        }
+      });
+      hdr.addEventListener('dragleave', () => hdr.classList.remove('ch-drop-target'));
+      hdr.addEventListener('drop', e => {
+        e.preventDefault();
+        hdr.classList.remove('ch-drop-target');
+        if (!dragInfo || dragInfo.fromChapter === ci) return;
+        // Remove page from source
+        const srcCh = chapters[dragInfo.fromChapter];
+        srcCh.pageIds.splice(dragInfo.fromIndex, 1);
+        // Insert at beginning of target
+        ch.pageIds.unshift(dragInfo.pageId);
+        // Expand target chapter and show dropped page
+        expandedChapter = ci;
+        currentPageId = dragInfo.pageId;
+        dragInfo = null;
+        renderChapterList();
+        renderPdfPage();
+      });
+
+      wrapper.appendChild(hdr);
+
+      /* Thumbnails — shown only when expanded */
+      if (isExpanded) {
+        const thumbRow = document.createElement('div');
+        thumbRow.className = 'ch-thumbs';
+        const showCount = Math.min(ch.pageIds.length, 6);
+
+        ch.pageIds.slice(0, showCount).forEach((pid, pi) => {
+          const isActive = pid === currentPageId;
+          const thumb = document.createElement('div');
+          thumb.className = 'ch-thumb' + (isActive ? ' ch-thumb-active' : '');
+          thumb.draggable = true;
+          thumb.dataset.pid = pid;
+          thumb.dataset.pi  = pi;
+          thumb.dataset.ci  = ci;
+          thumb.innerHTML = `<div class="thumb-mock">${renderMockDoc(ch.type, pi)}</div><div class="thumb-label">第 ${pi+1} 頁</div>`;
+
+          // Click to view
+          thumb.addEventListener('click', () => {
+            currentPageId = pid;
+            renderChapterList();
+            renderPdfPage();
+          });
+
+          // Drag start (both cross-chapter and same-chapter)
+          thumb.addEventListener('dragstart', e => {
+            dragInfo = { fromChapter: ci, fromIndex: pi, pageId: pid };
+            thumb.classList.add('ch-thumb-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+          });
+          thumb.addEventListener('dragend', () => {
+            thumb.classList.remove('ch-thumb-dragging');
+            dragInfo = null;
+            // Clean up any leftover highlights
+            document.querySelectorAll('.ch-drop-target, .ch-thumb-drag-over').forEach(el => {
+              el.classList.remove('ch-drop-target', 'ch-thumb-drag-over');
+            });
+          });
+
+          // Drop target for same-chapter reorder
+          thumb.addEventListener('dragover', e => {
+            if (dragInfo && dragInfo.fromChapter === ci && dragInfo.fromIndex !== pi) {
+              e.preventDefault();
+              thumb.classList.add('ch-thumb-drag-over');
+            }
+          });
+          thumb.addEventListener('dragleave', () => thumb.classList.remove('ch-thumb-drag-over'));
+          thumb.addEventListener('drop', e => {
+            e.preventDefault();
+            thumb.classList.remove('ch-thumb-drag-over');
+            if (!dragInfo || dragInfo.fromChapter !== ci || dragInfo.fromIndex === pi) return;
+            // Reorder within chapter
+            const moved = ch.pageIds.splice(dragInfo.fromIndex, 1)[0];
+            const insertAt = dragInfo.fromIndex < pi ? pi - 1 : pi;
+            ch.pageIds.splice(insertAt, 0, moved);
+            currentPageId = moved;
+            dragInfo = null;
+            renderChapterList();
+            renderPdfPage();
+          });
+
+          thumbRow.appendChild(thumb);
+        });
+
+        if (ch.pageIds.length > showCount) {
+          const more = document.createElement('div');
+          more.className = 'ch-thumb-more';
+          more.textContent = `+${ch.pageIds.length - showCount} 頁`;
+          thumbRow.appendChild(more);
+        }
+        wrapper.appendChild(thumbRow);
+      }
+
+      list.appendChild(wrapper);
+    });
+
+    document.getElementById('ch-nav-cur').textContent = expandedChapter + 1;
+  }
+
+  /* ── MOCK DOC THUMBNAILS ── */
+  function renderMockDoc(type, pi) {
+    if (type === 'photo') return `<div class="md-title">施工照片</div><div class="md-photos"><div class="md-photo"></div><div class="md-photo"></div></div><div class="md-line w60"></div>`;
+    if (type === 'text')  return `<div class="md-title">日誌</div><div class="md-meta">日期：114.03.${String(pi*3+1).padStart(2,'0')}</div><div class="md-line w90"></div><div class="md-line w75"></div><div class="md-line w85"></div><div class="md-line w60"></div>`;
+    return `<div class="md-title">臺北市政府都市發展局</div><div class="md-line w80"></div><div class="md-table"><div class="md-tr"><div class="md-td"></div><div class="md-td"></div><div class="md-td"></div></div><div class="md-tr"><div class="md-td"></div><div class="md-td"></div><div class="md-td"></div></div><div class="md-tr"><div class="md-td"></div><div class="md-td"></div><div class="md-td"></div></div></div>`;
+  }
+
+  /* ── RENDER RIGHT PANEL ── */
+  function renderPdfPage() {
+    // Find which chapter + local index owns currentPageId
+    let ci = 0, localPg = 0;
+    for (let i = 0; i < chapters.length; i++) {
+      const idx = chapters[i].pageIds.indexOf(currentPageId);
+      if (idx !== -1) { ci = i; localPg = idx; break; }
+    }
+    const ch = chapters[ci];
+    document.getElementById('pdf-content').innerHTML = buildDocPage(ci, localPg, ch.type, ch.title, ch.pageIds.length);
+
+    // Global page number = sum of pages before this chapter + localPg
+    let globalPg = localPg;
+    for (let i = 0; i < ci; i++) globalPg += chapters[i].pageIds.length;
+    const totalPages = chapters.reduce((s, c) => s + c.pageIds.length, 0);
+    document.getElementById('pdf-cur').textContent = `${globalPg + 1} / ${totalPages}`;
+
+    // Sync left panel highlight
+    if (ci !== expandedChapter) {
+      expandedChapter = ci;
+      renderChapterList();
+    } else {
+      document.querySelectorAll('.ch-thumb').forEach(t => {
+        t.classList.toggle('ch-thumb-active', t.dataset.pid === currentPageId);
+      });
+    }
+  }
+
+  /* ── BUILD FULL DOC PAGE ── */
+  function buildDocPage(ci, localPg, type, title, totalInChapter) {
+    const chLabel = `第${NUMS[ci]}章`;
+    const hdr = `<div class="doc-header-row"><span>臺北市政府都市發展局</span><span>第 ${localPg+1} 頁 / 共 ${totalInChapter} 頁</span></div>`;
+    const footer = `<div class="doc-footer">臺北市政府都市發展局・施工報告書</div>`;
+
+    if (type === 'photo') return `<div class="doc-page photo-page">${hdr}
+      <div class="doc-title">${chLabel} ${title}</div>
+      <div class="photo-grid">
+        <div class="photo-box"><div class="photo-img"></div><div class="photo-cap">施工現場 A（${localPg*2+1}）</div></div>
+        <div class="photo-box"><div class="photo-img"></div><div class="photo-cap">施工現場 B（${localPg*2+2}）</div></div>
+        <div class="photo-box"><div class="photo-img"></div><div class="photo-cap">施工現場 C（${localPg*2+3}）</div></div>
+        <div class="photo-box"><div class="photo-img"></div><div class="photo-cap">施工現場 D（${localPg*2+4}）</div></div>
+      </div>${footer}</div>`;
+
+    if (type === 'text') {
+      const typeLabel = title.includes('監造') ? '監造' : '施工';
+      return `<div class="doc-page text-page">${hdr}
+        <div class="doc-title">${chLabel} ${title}</div>
+        <div class="doc-meta-row"><span>日期：114年 ${Math.floor(localPg/3)+3}月 ${(localPg%3)*10+1}日</span><span>天氣：晴</span><span>氣溫：28°C</span></div>
+        <div class="doc-section">一、今日施工項目</div>
+        <div class="doc-body">本日依據施工計畫書辦理${typeLabel}作業，現場人員出勤正常，機具設備運作良好，依施工圖說及規範規定辦理，並針對各項工程品質進行管控。</div>
+        <div class="doc-section">二、施工進度說明</div>
+        <div class="doc-body">本日完成預定工作項目，累計完成率達 ${Math.min(95, 40 + localPg * 6)}%，符合預定進度。</div>
+        <div class="doc-section">三、品質檢查紀錄</div>
+        <div class="doc-body">依據品質計畫書辦理自主檢查，各項檢查結果均符合規範要求，無缺失事項。</div>
+        <div class="doc-section">四、安全衛生管理</div>
+        <div class="doc-body">現場安全設施完整，工作人員均配戴個人防護裝備，今日無工安事故發生。</div>
+        ${footer}</div>`;
+    }
+
+    const rows = [
+      ['鋼筋工程','噸','120.5','125.0','104.15%'],
+      ['模板工程','㎡','850.0','862.5','101.47%'],
+      ['混凝土工程','m³','320.0','318.5','99.53%'],
+      ['防水工程','㎡','450.0','452.0','100.44%'],
+      ['門窗工程','樘','68','68','100.00%'],
+    ];
+    return `<div class="doc-page table-page">${hdr}
+      <div class="doc-title">${chLabel} ${title}</div>
+      <div class="doc-subtitle">工程合約編號：11400-${(ci+1)*100+localPg}・民國114年度</div>
+      <table class="doc-table">
+        <thead><tr><th>項次</th><th>工程項目</th><th>單位</th><th>預算數量</th><th>實際數量</th><th>完成率</th></tr></thead>
+        <tbody>${rows.map((r,i) => `<tr><td>${String(localPg*5+i+1).padStart(3,'0')}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="doc-note">備註：本頁資料依據工程合約及監造紀錄整理，如有疑義請洽主辦單位。</div>
+      ${footer}</div>`;
+  }
+
+  /* ── NAV CONTROLS ── */
+  function chNavPrev() {
+    if (expandedChapter > 0) {
+      expandedChapter--;
+      currentPageId = chapters[expandedChapter].pageIds[0];
+      renderChapterList(); renderPdfPage();
+    }
+  }
+  function chNavNext() {
+    if (expandedChapter < chapters.length - 1) {
+      expandedChapter++;
+      currentPageId = chapters[expandedChapter].pageIds[0];
+      renderChapterList(); renderPdfPage();
+    }
+  }
+  function pdfPrev() {
+    // Find previous pageId globally
+    const flat = chapters.flatMap(c => c.pageIds);
+    const idx = flat.indexOf(currentPageId);
+    if (idx > 0) { currentPageId = flat[idx - 1]; renderPdfPage(); }
+  }
+  function pdfNext() {
+    const flat = chapters.flatMap(c => c.pageIds);
+    const idx = flat.indexOf(currentPageId);
+    if (idx < flat.length - 1) { currentPageId = flat[idx + 1]; renderPdfPage(); }
+  }
+
+  /* ══════════════════════════════════
+     ICR LOADING PAGE
+  ══════════════════════════════════ */
+  let icrTimerInterval = null;
+  let icrSeconds = 0;
+
+  function goToIcrLoading() {
+    showPage('page-icr-loading');
+    icrSeconds = 0;
+    clearInterval(icrTimerInterval);
+    icrTimerInterval = setInterval(() => {
+      icrSeconds++;
+      const m = Math.floor(icrSeconds / 60), s = icrSeconds % 60;
+      document.getElementById('icr-timer').textContent = `已花費 ${m} 分 ${s} 秒…`;
+    }, 1000);
+  }
+
+  /* ══════════════════════════════════
+     ICR EDIT PAGE DATA & LOGIC
+  ══════════════════════════════════ */
+
+  // ICR data model
+  const ICR_NAMES = [
+    '臺北市南港區玉成公共住宅統包工程',
+    '臺北市信義區四四南村修繕工程',
+    '臺北市大安區建國南路人行道改善',
+    '臺北市中山區民生東路景觀工程',
+    '臺北市松山區八德路道路拓寬工程',
+    '臺北市文山區木柵路排水改善工程',
+    '臺北市士林區中正路橋梁維修工程',
+    '臺北市北投區溫泉路整建工程',
+  ];
+  const ICR_L1 = ['壹','貳','參','肆','伍'];
+  const ICR_L2 = ['一','二','三','四','五','六'];
+
+  let icrData = [];
+  let icrFilter = null;      // null | 'high' | 'low'
+  let icrActiveId = null;    // currently selected / editing card id
+  let icrPdfPage = 1;
+  const ICR_TOTAL_PDF = 500;
+
+  function buildIcrData() {
+    icrData = [];
+    for (let i = 0; i < 31; i++) {
+      const conf = i % 3 === 2 ? Math.floor(Math.random() * 35) + 15   // low 15-49
+                               : Math.floor(Math.random() * 20) + 78;   // high 78-97
+      icrData.push({
+        id: i,
+        page: `第${Math.floor(i/4)+1}頁`,
+        num: `#${String(i+1).padStart(3,'0')}`,
+        conf,
+        high: conf >= 60,
+        l1: ICR_L1[i % ICR_L1.length],
+        l2: ICR_L2[i % ICR_L2.length],
+        l3: `${Math.floor(i/ICR_L2.length)+1}.${(i % ICR_L2.length)+1}`,
+        name: ICR_NAMES[i % ICR_NAMES.length],
+        status: 'untouched', // untouched | editing | edited
+        pdfRow: (i % 8) + 1,  // which row in the mock PDF table
+      });
+    }
+  }
+
+  function goToIcrEdit() {
+    clearInterval(icrTimerInterval);
+    buildIcrData();
+    icrFilter = null;
+    icrActiveId = null;
+    icrPdfPage = 1;
+    showPage('page-icr-edit');
+    updateIcrCounts();
+    renderIcrList();
+    renderIcrPdf();
+  }
+
+  function filteredIcr() {
+    if (icrFilter === 'high') return icrData.filter(d => d.high);
+    if (icrFilter === 'low')  return icrData.filter(d => !d.high);
+    return icrData;
+  }
+
+  function updateIcrCounts() {
+    const high = icrData.filter(d => d.high).length;
+    const low  = icrData.filter(d => !d.high).length;
+    document.getElementById('tag-high-count').textContent = high;
+    document.getElementById('tag-low-count').textContent  = low;
+    const list = filteredIcr();
+    document.getElementById('icr-count').textContent    = list.length;
+    document.getElementById('icr-nav-total').textContent = list.length;
+  }
+
+  function toggleFilter(type) {
+    icrFilter = (icrFilter === type) ? null : type;
+    document.getElementById('tag-high').classList.toggle('active', icrFilter === 'high' || icrFilter === null);
+    document.getElementById('tag-low').classList.toggle('active',  icrFilter === 'low'  || icrFilter === null);
+    icrActiveId = null;
+    updateIcrCounts();
+    renderIcrList();
+    renderIcrPdf();
+  }
+
+  function renderIcrList() {
+    const list = document.getElementById('icr-list');
+    list.innerHTML = '';
+    const items = filteredIcr();
+
+    items.forEach((d, idx) => {
+      const isEditing = d.id === icrActiveId && d.status === 'editing';
+      const isSelected = d.id === icrActiveId;
+
+      const card = document.createElement('div');
+      card.className = 'icr-card' +
+        (isEditing  ? ' icr-editing'  : '') +
+        (isSelected && !isEditing ? ' icr-selected' : '');
+      card.dataset.id = d.id;
+
+      // Icon — based on edit status only
+      let iconHtml;
+      if (d.status === 'edited') {
+        iconHtml = `<div class="icr-status-icon icr-icon-confirmed">✓</div>`;
+      } else if (d.status === 'editing') {
+        iconHtml = `<div class="icr-status-icon icr-icon-edit"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3L4 13H1v-3L9.5 1.5z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/><path d="M7.5 3.5l3 3" stroke="white" stroke-width="1.5"/></svg></div>`;
+      } else {
+        iconHtml = `<div class="icr-status-icon icr-icon-untouched">?</div>`;
+      }
+
+      // Status tag
+      const tagMap = {
+        untouched: `<span class="icr-status-tag icr-tag-untouched">未更動</span>`,
+        editing:   `<span class="icr-status-tag icr-tag-editing">編輯中</span>`,
+        edited:    `<span class="icr-status-tag icr-tag-edited">已編輯</span>`,
+      };
+
+      const confClass = d.high ? 'icr-conf-high' : 'icr-conf-low';
+      const editable = isEditing ? 'editable' : '';
+
+      card.innerHTML = `
+        <div class="icr-card-header">
+          ${iconHtml}
+          <div class="icr-meta">
+            <span class="icr-meta-page">${d.page}</span>
+            <span class="icr-meta-dot">·</span>
+            <span class="icr-meta-id">${d.num}</span>
+            <span class="icr-meta-dot">·</span>
+            <span class="icr-meta-conf ${confClass}">${d.conf}%</span>
+          </div>
+          ${tagMap[d.status]}
+        </div>
+        <div class="icr-fields">
+          <input class="icr-field-input ${editable}" value="${d.l1}" data-field="l1" data-id="${d.id}" ${isEditing?'':'readonly'}>
+          <span class="icr-field-sep">、</span>
+          <input class="icr-field-input ${editable}" value="${d.l2}" data-field="l2" data-id="${d.id}" ${isEditing?'':'readonly'}>
+          <span class="icr-field-sep">、</span>
+          <input class="icr-field-input ${editable}" value="${d.l3}" data-field="l3" data-id="${d.id}" ${isEditing?'':'readonly'}>
+          <span class="icr-field-name-display">${d.name}</span>
+        </div>
+        <div class="icr-actions">
+          <button class="icr-btn-ignore" data-id="${d.id}">忽略</button>
+          <button class="icr-btn-confirm" data-id="${d.id}">修改確認</button>
+        </div>`;
+
+      // Click card to enter editing
+      card.addEventListener('click', e => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+        selectIcr(d.id);
+      });
+
+      // Input changes — save to data
+      card.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const did = parseInt(e.target.dataset.id);
+          const field = e.target.dataset.field;
+          const rec = icrData.find(x => x.id === did);
+          if (rec) rec[field] = e.target.value;
+        });
+      });
+
+      // Ignore button
+      const ignoreBtn = card.querySelector('.icr-btn-ignore');
+      if (ignoreBtn) ignoreBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const rec = icrData.find(x => x.id === parseInt(e.target.dataset.id));
+        if (rec) { rec.status = 'untouched'; icrActiveId = null; }
+        renderIcrList(); renderIcrPdf();
+      });
+
+      // Confirm button
+      const confirmBtn = card.querySelector('.icr-btn-confirm');
+      if (confirmBtn) confirmBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const rec = icrData.find(x => x.id === parseInt(e.target.dataset.id));
+        if (rec) rec.status = 'edited';
+        icrActiveId = null;
+        renderIcrList(); renderIcrPdf();
+      });
+
+      list.appendChild(card);
+    });
+
+    // Update nav counter
+    const activeIdx = items.findIndex(d => d.id === icrActiveId);
+    document.getElementById('icr-nav-cur').textContent = activeIdx >= 0 ? activeIdx + 1 : 1;
+  }
+
+  function selectIcr(id) {
+    const rec = icrData.find(x => x.id === id);
+    if (!rec) return;
+    // Revert previous card ONLY if it was untouched before (don't revert already-edited cards)
+    if (icrActiveId !== null && icrActiveId !== id) {
+      const prev = icrData.find(x => x.id === icrActiveId);
+      if (prev && prev.status === 'editing') prev.status = 'untouched';
+    }
+    // Don't override already-edited status back to editing
+    if (rec.status !== 'edited') rec.status = 'editing';
+    icrActiveId = id;
+    icrPdfPage = rec.pdfRow;
+    renderIcrList();
+    renderIcrPdf();
+    const items = filteredIcr();
+    const idx = items.findIndex(d => d.id === id);
+    document.getElementById('icr-nav-cur').textContent = idx + 1;
+    setTimeout(() => {
+      const el = document.querySelector(`.icr-card[data-id="${id}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }
+
+  function icrNavPrev() {
+    const items = filteredIcr();
+    const idx = items.findIndex(d => d.id === icrActiveId);
+    const prev = idx > 0 ? idx - 1 : items.length - 1;
+    selectIcr(items[prev].id);
+  }
+  function icrNavNext() {
+    const items = filteredIcr();
+    const idx = items.findIndex(d => d.id === icrActiveId);
+    const next = idx < items.length - 1 ? idx + 1 : 0;
+    selectIcr(items[next].id);
+  }
+
+  function icrPdfPrev() {
+    if (icrPdfPage > 1) { icrPdfPage--; renderIcrPdf(); }
+  }
+  function icrPdfNext() {
+    if (icrPdfPage < ICR_TOTAL_PDF) { icrPdfPage++; renderIcrPdf(); }
+  }
+
+  /* ── ICR PDF mock render ── */
+  function renderIcrPdf() {
+    document.getElementById('icr-pdf-cur').textContent = `${icrPdfPage} / ${ICR_TOTAL_PDF}`;
+    const activeRec = icrData.find(x => x.id === icrActiveId);
+    const activeRow = activeRec ? activeRec.pdfRow : -1;
+
+    // Which rows get orange highlight (other records on this page)
+    const orangeRows = icrData
+      .filter(d => d.id !== icrActiveId && d.pdfRow === icrPdfPage % 8 + 1)
+      .map(d => d.pdfRow);
+
+    const rows = [
+      ['壹','一','1.1','臺北市南港區玉成公共住宅統包工程','120.5','125.0'],
+      ['壹','一','1.2','臺北市南港區玉成公共住宅統包工程','850.0','862.5'],
+      ['壹','二','2.1','臺北市信義區四四南村修繕工程','320.0','318.5'],
+      ['壹','二','2.2','臺北市信義區四四南村修繕工程','450.0','452.0'],
+      ['貳','一','1.1','臺北市大安區建國南路人行道改善','68.0','68.0'],
+      ['貳','一','1.2','臺北市大安區建國南路人行道改善','980.5','985.0'],
+      ['貳','二','2.1','臺北市中山區民生東路景觀工程','245.0','240.5'],
+      ['貳','二','2.2','臺北市中山區民生東路景觀工程','178.0','180.0'],
+    ];
+
+    const rowsHtml = rows.map((r, i) => {
+      const rowNum = i + 1;
+      const isRed    = rowNum === activeRow;
+      const isOrange = !isRed && (orangeRows.includes(rowNum) || (i % 3 === 1 && activeRec));
+      const cls = isRed ? 'row-red' : (isOrange ? 'row-orange' : '');
+      return `<tr class="${cls}">
+        <td>${rowNum}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td>
+        <td style="text-align:left; max-width:180px;">${r[3]}</td>
+        <td>${r[4]}</td><td>${r[5]}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('icr-pdf-content').innerHTML = `
+      <div class="icr-pdf-wrap">
+        <div class="icr-pdf-header">
+          <span>臺北市政府都市發展局</span>
+          <span>第 ${icrPdfPage} 頁 / 共 ${ICR_TOTAL_PDF} 頁</span>
+        </div>
+        <div class="icr-pdf-inner">
+          <div class="icr-pdf-title">工程估驗計價總表</div>
+          <div class="icr-pdf-subtitle">工程合約編號：11400-100・民國114年度</div>
+          <table class="icr-pdf-table">
+            <thead><tr><th>#</th><th>層級一</th><th>層級二</th><th>層級三</th><th>工程名稱</th><th>預算數量</th><th>實際數量</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <div style="margin-top:12px; font-size:10px; color:#aaa; display:flex; gap:16px; align-items:center;">
+            <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border:2px solid #e05a5a;display:inline-block;background:#fff5f5;"></span> 目前檢視</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border:2px solid #f39c12;display:inline-block;background:#fffbf0;"></span> 其他資料位置</span>
+          </div>
+        </div>
+      </div>`;
+  }
+</script>
+</body>
+</html>
