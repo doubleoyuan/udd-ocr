@@ -978,14 +978,7 @@
     justify-content: flex-end;
   }
   .icr-card .icr-actions { display: flex; }
-  .icr-btn-ignore {
-    padding: 6px 16px; border-radius: 6px;
-    border: 1.5px solid #a0a4b0;
-    background: white; color: var(--gray-600);
-    font-size: 13px; font-family: inherit; cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .icr-btn-ignore:hover { background: var(--gray-100); border-color: var(--gray-800); }
+
   .icr-btn-confirm {
     padding: 6px 16px; border-radius: 6px;
     border: 1.5px solid #3b82f6;
@@ -2356,8 +2349,7 @@
           </div>
         </div>
         <div class="icr-actions">
-          <button class="icr-btn-ignore" data-id="${d.id}">忽略</button>
-          <button class="icr-btn-confirm" data-id="${d.id}">修改確認</button>
+<button class="icr-btn-confirm" data-id="${d.id}">修改確認</button>
         </div>`;
 
       // Click card to enter editing
@@ -2376,14 +2368,6 @@
         });
       });
 
-      // Ignore button
-      const ignoreBtn = card.querySelector('.icr-btn-ignore');
-      if (ignoreBtn) ignoreBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        const rec = icrData.find(x => x.id === parseInt(e.target.dataset.id));
-        if (rec) { rec.status = 'untouched'; icrActiveId = null; }
-        updateIcrCounts(); renderIcrList(); renderIcrPdf();
-      });
 
       // Confirm button
       const confirmBtn = card.querySelector('.icr-btn-confirm');
